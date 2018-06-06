@@ -10,4 +10,6 @@ With this plugin, juse one double click on your ".prefab" file, you can have the
 
 For now, you still need to click "Apply" button to save your work.
 
+An example project is available [here](https://github.com/Cloudage/PrefabStandaloneEditorTest)
+
 ![snapshot](snapshot.png)
