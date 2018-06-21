@@ -26,43 +26,37 @@ public class PrefabStandaloneEditor : UnityEngine.Object
     static float lightRotationY;
     static bool isEditingPrefab;
 
-    static Bounds Join(Bounds a, Bounds b)
-    {
-        var min = Vector3.Min(a.min, b.min);
-        var max = Vector3.Max(a.max, b.max);
-        var center = (min + max) / 2;
-        return new Bounds(center, max - min);
-    }
-
     static Bounds CaculateBounds(GameObject obj)
     {
-        Bounds bounds = new Bounds();
+        var bounds = new Bounds();
 
-        var renderer = obj.GetComponent<Renderer>();
-        if (renderer != null)
+        var meshFilters = obj.GetComponentsInChildren<MeshFilter>();
+        foreach (var meshFilter in meshFilters)
         {
-            bounds = Join(bounds, renderer.bounds);
+            var vertices = meshFilter.sharedMesh.vertices;
+
+            if (vertices?.Length >= 2)
+            {
+                Vector3 max = vertices[0];
+                Vector3 min = vertices[0];
+
+                for (int i = 1; i < vertices.Length; i++)
+                {
+                    max = Vector3.Max(max, vertices[i]);
+                    min = Vector3.Min(min, vertices[i]);
+                }
+
+                max = meshFilter.transform.TransformPoint(max);
+                max = obj.transform.InverseTransformPoint(max);
+                min = meshFilter.transform.TransformPoint(min);
+                min = obj.transform.InverseTransformPoint(min);
+
+                bounds.Encapsulate(max);
+                bounds.Encapsulate(min);
+            }
         }
 
-        var collider = obj.GetComponent<Collider>();
-        if (collider != null)
-        {
-            bounds = Join(bounds, collider.bounds);
-        }
-
-        var matW2L = obj.transform.worldToLocalMatrix;
-
-        for (int i = 0; i < obj.transform.childCount; i++)
-        {
-            var child = obj.transform.GetChild(i).gameObject;
-            var childBounds = CaculateBounds(child);
-
-            bounds = Join(bounds, new Bounds(matW2L * childBounds.center, matW2L * childBounds.size));
-        }
-
-        var matL2W = obj.transform.localToWorldMatrix;
-
-        return new Bounds(matL2W * bounds.center, matL2W * bounds.size);
+        return bounds;
     }
 
     static PrefabStandaloneEditor()
